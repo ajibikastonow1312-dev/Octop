@@ -10,7 +10,9 @@ import type {
   SkillPackageSkill,
 } from "../../../../api/types/skillPackage";
 import { useAgent } from "../../../../context/AgentContext";
+import { useCurrentUser } from "../../../../hooks/useCurrentUser";
 import { PackageIcon } from "../../../SkillPackages/PackageIcon";
+import { PERM, userCanAny } from "../../../../utils/permissions";
 import { showApiError } from "../../../../utils/showApiToast";
 import { supportsHostSkillPackagesFromConfig } from "../../../Experts/components/agentBackendForm";
 import type { SkillSpec } from "../useSkills";
@@ -57,11 +59,13 @@ export default function SkillPackagesTab({
   toggleEnabled,
 }: SkillPackagesTabProps) {
   const { t } = useTranslation();
+  const currentUser = useCurrentUser();
   const { agents } = useAgent();
   const agent = useMemo(
     () => agents.find((row) => row.agent_id === agentId) ?? null,
     [agents, agentId],
   );
+  const canCopySkills = userCanAny(currentUser, PERM.skillPackages);
   const packagesSupported = supportsHostSkillPackagesFromConfig(
     agent?.config ?? null,
   );
@@ -314,19 +318,21 @@ export default function SkillPackagesTab({
                     <Info size={14} />
                     {t("common.viewDetail")}
                   </button>
-                  <div
-                    className={styles.footerActions}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      className={styles.detailBtn}
-                      onClick={() => void openCopyModal(pack)}
+                  {canCopySkills ? (
+                    <div
+                      className={styles.footerActions}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Copy size={14} />
-                      {t("skills.copySkills")}
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        className={styles.detailBtn}
+                        onClick={() => void openCopyModal(pack)}
+                      >
+                        <Copy size={14} />
+                        {t("skills.copySkills")}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

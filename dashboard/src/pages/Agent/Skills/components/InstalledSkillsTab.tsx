@@ -6,7 +6,9 @@ import { useAgent } from "../../../../context/AgentContext";
 import { isAgentChatReady } from "../../../../utils/agentError";
 import { CardSkeleton } from "../../../../components/Skeleton";
 import { useCardTableView } from "../../../../hooks/useCardTableView";
+import { useCurrentUser } from "../../../../hooks/useCurrentUser";
 import { EmptyState } from "../../../../components/EmptyState";
+import { PERM, userCanAny } from "../../../../utils/permissions";
 import { SkillCard } from "./SkillCard";
 import { SkillDrawer, type SkillFormValues } from "./SkillDrawer";
 import { SkillImportModal } from "./SkillImportModal";
@@ -63,7 +65,9 @@ export default function InstalledSkillsTab({
   deleteSkill,
 }: InstalledSkillsTabProps) {
   const { t } = useTranslation();
+  const currentUser = useCurrentUser();
   const { agents } = useAgent();
+  const canPushToPackages = userCanAny(currentUser, PERM.skillPackages);
   const workspaceReady = useMemo(
     () =>
       isAgentChatReady(
@@ -284,10 +288,12 @@ export default function InstalledSkillsTab({
         onClose={handleDrawerClose}
         onSubmit={handleSubmit}
         onPushToPackage={
-          kind === "custom" ? (skill) => setPushSkill(skill) : undefined
+          kind === "custom" && canPushToPackages
+            ? (skill) => setPushSkill(skill)
+            : undefined
         }
       />
-      {kind === "custom" ? (
+      {kind === "custom" && canPushToPackages ? (
         <PushSkillToPackageModal
           open={pushSkill != null}
           agentId={agentId}

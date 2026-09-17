@@ -9,7 +9,7 @@
  * an explicit `agentId` so callers decide which agent's skills to show.
  */
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Empty } from "antd";
 import { Blocks, Package, Sparkles, Store } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -21,8 +21,6 @@ import SkillPackagesTab from "./SkillPackagesTab";
 import SkillHubTab from "./SkillHubTab";
 import { useSkills } from "../useSkills";
 import styles from "../index.module.less";
-import { useCurrentUser } from "../../../../hooks/useCurrentUser";
-import { userCanAny, PERM } from "../../../../utils/permissions";
 
 type SkillsTab = "custom" | "builtin" | "skillhub" | "packages";
 
@@ -40,14 +38,7 @@ interface SkillsTabsProps {
 
 export default function SkillsTabs({ agentId }: SkillsTabsProps) {
   const { t } = useTranslation();
-  const currentUser = useCurrentUser();
-  // Hide the skill-packages tab for users without the `skill_packages` permission.
-  const canSkillPackages = userCanAny(currentUser, PERM.skillPackages);
   const [activeTab, setActiveTab] = useState<SkillsTab>("custom");
-  const tabs = useMemo(
-    () => SKILL_TABS.filter((tab) => tab.key !== "packages" || canSkillPackages),
-    [canSkillPackages],
-  );
   const onInstalledTab =
     activeTab === "custom" ||
     activeTab === "builtin" ||
@@ -63,7 +54,7 @@ export default function SkillsTabs({ agentId }: SkillsTabsProps) {
 
   return (
     <div className={styles.skillsTabs}>
-      <TabBar tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
+      <TabBar tabs={SKILL_TABS} activeKey={activeTab} onChange={setActiveTab} />
 
       <div className={styles.skillsTabsContent}>
         {activeTab === "custom" || activeTab === "builtin" ? (
@@ -79,7 +70,7 @@ export default function SkillsTabs({ agentId }: SkillsTabsProps) {
           )
         ) : activeTab === "skillhub" && agentId ? (
           <SkillHubTab key={agentId} target={{ type: "agent", agentId }} />
-        ) : activeTab === "packages" && agentId && canSkillPackages ? (
+        ) : activeTab === "packages" && agentId ? (
           <SkillPackagesTab
             key={agentId}
             agentId={agentId}
