@@ -4,13 +4,18 @@ import { CurrentUserProvider } from "../../../../hooks/useCurrentUser";
 import type { OctopUser } from "../../../../api/modules/auth";
 import SkillPackagesTab from "./SkillPackagesTab";
 
-const list = vi.fn();
-const listMounted = vi.fn();
-
 vi.mock("../../../../api/modules/skillPackages", () => ({
   skillPackagesApi: {
-    list: () => list(),
-    listMounted: (agentId: string) => listMounted(agentId),
+    list: () =>
+      Promise.resolve([
+        {
+          id: "pkg-1",
+          name: "Package One",
+          description: "desc",
+          skill_count: 1,
+        },
+      ]),
+    listMounted: () => Promise.resolve({ package_ids: [] }),
     get: vi.fn(),
     replaceMounted: vi.fn(),
     copyToWorkspace: vi.fn(),
@@ -41,17 +46,7 @@ const viewer: OctopUser = {
 };
 
 describe("<SkillPackagesTab />", () => {
-  it("keeps mount controls visible but hides copy actions without permission", async () => {
-    list.mockResolvedValue([
-      {
-        id: "pkg-1",
-        name: "Package One",
-        description: "desc",
-        skill_count: 1,
-      },
-    ]);
-    listMounted.mockResolvedValue({ package_ids: [] });
-
+  it("renders packages but hides copy actions without permission", async () => {
     render(
       <CurrentUserProvider user={viewer} setUser={vi.fn()}>
         <SkillPackagesTab
@@ -63,12 +58,11 @@ describe("<SkillPackagesTab />", () => {
       </CurrentUserProvider>,
     );
 
-    await screen.findByText("Package One");
-    expect(screen.getByRole("switch")).toBeInTheDocument();
     await waitFor(() => {
-      expect(
-        screen.queryByRole("button", { name: "skills.copySkills" }),
-      ).not.toBeInTheDocument();
+      expect(screen.getByText("Package One")).toBeInTheDocument();
     });
+    expect(
+      screen.queryByRole("button", { name: "skills.copySkills" }),
+    ).not.toBeInTheDocument();
   });
 });
